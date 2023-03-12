@@ -18,12 +18,6 @@ class Note(Enum):
     Bb = 10
     B = 11
 
-    def next(self):
-        return Note((self.value + 1) % len(Note))
-    
-    def prev(self):
-        return Note((self.value - 1) % len(Note))
-
     def get_semitones(self):
         return self.value
 
@@ -32,20 +26,6 @@ class Pitch:
     def __init__(self, note: Note, octave: int):
         self.note = note
         self.octave = octave
-
-    def next(self):
-        note = self.note.next()
-        octave = self.octave
-        if self.note == Note.B:
-            octave += 1
-        return Pitch(note, octave)
-
-    def prev(self):
-        note = self.note.prev()
-        octave = self.octave
-        if self.note == Note.C:
-            octave -= 1
-        return Pitch(note, octave)
 
     def get_semitones(self):
         note_semitones = self.note.get_semitones() - Note.A.get_semitones()
