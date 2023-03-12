@@ -31,6 +31,9 @@ class Pitch:
 
     def __str__(self):
         return self.note.name + str(self.octave)
+    
+    def __eq__(self, other):
+        return self.note == other.note and self.octave == other.octave
 
     def get_semitones(self):
         semitones = self.note.get_semitones() + self.octave * SEMITONES_PER_OCTAVE
@@ -38,9 +41,9 @@ class Pitch:
 
     @classmethod
     def from_semitones(cls, semitones: float):
-        note_semitones = semitones + A440_SEMITONES
-        note = Note(round(note_semitones % SEMITONES_PER_OCTAVE))
-        octave = int(note_semitones // SEMITONES_PER_OCTAVE)
+        note_semitones = round(semitones) + A440_SEMITONES
+        note = Note(note_semitones % SEMITONES_PER_OCTAVE)
+        octave = note_semitones // SEMITONES_PER_OCTAVE
         return cls(note, octave)
     
     def get_hertz(self):
@@ -50,19 +53,3 @@ class Pitch:
     def from_hertz(cls, hertz: float):
         semitones = log2(hertz / A440_HERTZ) * SEMITONES_PER_OCTAVE
         return cls.from_semitones(semitones)
-    
-
-print(Pitch.from_hertz(83))
-
-# pitches = [
-#     Pitch(Note.A, 4),
-#     Pitch(Note.A, 5),
-#     Pitch(Note.A, 3),
-#     Pitch(Note.Bb, 4),
-#     Pitch(Note.Ab, 4),
-# ]
-
-# for octave in range(5):
-#     for note in Note:
-#         p = Pitch(note, octave)
-#         print(p, p.get_hertz())
