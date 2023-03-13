@@ -76,6 +76,13 @@ class TestGetAllPositions(unittest.TestCase):
         self.assertEqual(partials[1], 5)
         self.assertEqual(partials[2], 6)
 
+class TestPositionToString(unittest.TestCase):
+    def runTest(self):
+        self.assertEqual(Trombone.position_to_string(0), 'First')
+        self.assertEqual(Trombone.position_to_string(0.2), 'First+0.2')
+        self.assertEqual(Trombone.position_to_string(-0.2), 'First-0.2')
+        self.assertEqual(Trombone.position_to_string(5.2), 'Sixth+0.2')
+
 
 if __name__ == '__main__':
     unittest.main()

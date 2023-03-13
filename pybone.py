@@ -71,12 +71,20 @@ class Pitch:
 
 TROMBONE_FUNDAMENTAL = Pitch(Note.Bb, 1)
 TROMBONE_SLIDE_LENGTH = 7.5
-
+POSITIONS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh']
 
 class Trombone:
     def __init__(self, fundamental: Pitch = TROMBONE_FUNDAMENTAL, slide_length: float = TROMBONE_SLIDE_LENGTH):
         self.fundamental = fundamental
         self.slide_length = slide_length
+    
+    @classmethod
+    def position_to_string(cls, position: float):
+        rounded_position = round(position)
+        offset = position - rounded_position
+        offset_prefix = '+' if offset > 0 else ''
+        offset_text = '' if offset == 0 else '{0:.3g}'.format(offset)
+        return '{}{}{}'.format(POSITIONS[rounded_position], offset_prefix, offset_text)
     
     def get_pitch(self, position: float, partial: int):
         """
