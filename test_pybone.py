@@ -66,7 +66,7 @@ class TestAlternatePositions(unittest.TestCase):
 class TestGetAllPositions(unittest.TestCase):
     def runTest(self):
         trombone = Trombone()
-        positions, partials = trombone.get_all_positions(Pitch(Note.D, 4))
+        positions, partials = trombone.get_positions_and_partials(Pitch(Note.D, 4))
         self.assertEqual(len(positions), 3)
         self.assertAlmostEqual(positions[0], 0, places=0)
         self.assertAlmostEqual(positions[1], 3, places=0)
@@ -78,10 +78,29 @@ class TestGetAllPositions(unittest.TestCase):
 
 class TestPositionToString(unittest.TestCase):
     def runTest(self):
-        self.assertEqual(Trombone.position_to_string(0), 'First')
-        self.assertEqual(Trombone.position_to_string(0.2), 'First+0.2')
-        self.assertEqual(Trombone.position_to_string(-0.2), 'First-0.2')
-        self.assertEqual(Trombone.position_to_string(5.2), 'Sixth+0.2')
+        self.assertEqual(Trombone.position_to_string(0), '1st')
+        self.assertEqual(Trombone.position_to_string(0.2), '1st+0.2')
+        self.assertEqual(Trombone.position_to_string(-0.2), '1st-0.2')
+        self.assertEqual(Trombone.position_to_string(5.2), '6th+0.2')
+
+class TestMinimizeSlideMovement(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 3),
+            Pitch(Note.D, 3),
+            Pitch(Note.E, 3),
+            Pitch(Note.F, 3),
+            Pitch(Note.G, 3),
+            Pitch(Note.A, 3),
+            Pitch(Note.B, 3),
+            Pitch(Note.C, 4),
+        ]
+        path = trombone.minimize_slide_movement(pitches)
+        print()
+        for state in path:
+            print(state.pitch, Trombone.position_to_string(state.position))
+
 
 
 if __name__ == '__main__':
