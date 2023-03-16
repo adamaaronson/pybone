@@ -76,7 +76,7 @@ class Pitch:
 
 
 TROMBONE_FUNDAMENTAL = Pitch(Note.Bb, 1)
-TROMBONE_SLIDE_LENGTH = 7.5
+TROMBONE_SLIDE_LENGTH = 6.5
 POSITIONS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th']
 START_NODE = 'START'
 END_NODE = 'END'
@@ -154,7 +154,7 @@ class Trombone:
             states.append(self.get_states_of_pitch(id, pitch))
         return states
     
-    def minimize_slide_movement(self, pitches: list[Pitch]):
+    def minimize_slide_movement(self, pitches: list[Pitch], round_positions=False):
         """
         Returns the list of slide positions that minimizes the amount
         of slide movement to play a given sequence of pitches.
@@ -183,5 +183,10 @@ class Trombone:
             DG.add_weighted_edges_from(weighted_edges)
         
         path = nx.shortest_path(DG, START_NODE, END_NODE, weight='weight')
-        return path[1:-1] # remove start and end node
+        path = path[1:-1] # remove start and end node
+        
+        if round_positions:
+            path = [TromboneState(t.id, t.pitch, round(t.position), t.partial) for t in path]
+        
+        return path
         

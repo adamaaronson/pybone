@@ -88,18 +88,34 @@ class TestMinimizeSlideMovement(unittest.TestCase):
         trombone = Trombone()
         pitches = [
             Pitch(Note.C, 3),
+            Pitch(Note.F, 3),
+            Pitch(Note.G, 3)
+        ]
+        expected_positions = [5, 5, 3]
+
+        path = trombone.minimize_slide_movement(pitches, round_positions=True)
+
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
+
+class TestMinimizeSlideMovementScale(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 3),
             Pitch(Note.D, 3),
             Pitch(Note.E, 3),
             Pitch(Note.F, 3),
             Pitch(Note.G, 3),
             Pitch(Note.A, 3),
             Pitch(Note.B, 3),
-            Pitch(Note.C, 4),
+            Pitch(Note.C, 3)
         ]
-        path = trombone.minimize_slide_movement(pitches)
-        print()
-        for state in path:
-            print(state.pitch, Trombone.position_to_string(state.position))
+        expected_positions = [5, 3, 1, 0, 3, 5, 6, 5]
+        path = trombone.minimize_slide_movement(pitches, round_positions=True)
+
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
 
 
 
