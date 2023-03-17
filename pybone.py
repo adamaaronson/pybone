@@ -21,6 +21,18 @@ class Note(Enum):
     def get_semitones(self) -> int:
         return self.value
 
+ENHARMONICS = {
+    'C#': 'Db',
+    'D#': 'Eb',
+    'E#': 'F',
+    'F#': 'Gb',
+    'G#': 'Ab',
+    'A#': 'Bb',
+    'B#': 'C',
+    'Cb': 'B',
+    'Fb': 'E'
+}
+
 SEMITONES_PER_OCTAVE = 12
 
 A440_NOTE = Note.A
@@ -29,13 +41,17 @@ A440_HERTZ = 440
 A440_SEMITONES = A440_NOTE.get_semitones() + SEMITONES_PER_OCTAVE * A440_OCTAVE
 
 class Pitch:
-    def __init__(self, note: Note, octave: int, offset: float = 0):
+    def __init__(self, note: Note, octave: int, offset: float = 0, name: str = None):
         self.note = note
         self.octave = octave
         self.offset = offset
+        if name:
+            self.name = name
+        else:
+            self.name = self.note.name
 
     def __hash__(self):
-        return hash((self.note, self.octave, self.offset))
+        return hash((self.name, self.note, self.octave, self.offset))
 
     def __repr__(self):
         if self.offset > 0:
@@ -44,7 +60,15 @@ class Pitch:
             offset_text = '{0:.3g}'.format(self.offset)
         else:
             offset_text = ''
-        return self.note.name + str(self.octave) + offset_text
+        
+        if self.name == 'B#':
+            octave_text = str(self.octave - 1)
+        elif self.name == 'Cb':
+            octave_text = str(self.octave + 1)
+        else:
+            octave_text = str(self.octave)
+
+        return self.name + octave_text + offset_text
     
     def __eq__(self, other):
         return self.note == other.note and self.octave == other.octave and self.offset == other.offset
@@ -52,6 +76,25 @@ class Pitch:
     def get_semitones(self):
         semitones = self.note.get_semitones() + self.octave * SEMITONES_PER_OCTAVE + self.offset
         return semitones - A440_SEMITONES
+    
+    @classmethod
+    def from_string(cls, string: str):
+        is_num = [c.isnumeric() for c in string]
+        num_index = is_num.index(True)
+        name = string[:num_index]
+
+        if hasattr(Note, name):
+            note = Note[name]
+        elif name in ENHARMONICS:
+            note = Note[ENHARMONICS[name]]
+        
+        octave = int(string[num_index:])
+        if name == 'Cb':
+            octave -= 1
+        elif name == 'B#':
+            octave += 1
+
+        return Pitch(note, octave, name=name)
 
     @classmethod
     def from_semitones(cls, semitones: float):

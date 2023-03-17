@@ -17,6 +17,24 @@ class TestFromHertz(unittest.TestCase):
         self.assertEqual(Pitch.from_hertz(493).remove_offset(), Pitch(Note.B, 4))
         self.assertEqual(Pitch.from_hertz(523).remove_offset(), Pitch(Note.C, 5))
 
+class TestFromString(unittest.TestCase):
+    def runTest(self):
+        self.assertEqual(Pitch.from_string('G6'), Pitch(Note.G, 6))
+        self.assertEqual(Pitch.from_string('Gb6'), Pitch(Note.Gb, 6))
+        self.assertEqual(Pitch.from_string('G13'), Pitch(Note.G, 13))
+        self.assertEqual(Pitch.from_string('F#13'), Pitch(Note.Gb, 13))
+        self.assertEqual(Pitch.from_string('B#6'), Pitch(Note.C, 7))
+        self.assertEqual(Pitch.from_string('Cb6'), Pitch(Note.B, 5))
+
+class TestToString(unittest.TestCase):
+    def runTest(self):
+        self.assertEqual(str(Pitch.from_string('G6')), 'G6')
+        self.assertEqual(str(Pitch.from_string('Gb6')), 'Gb6')
+        self.assertEqual(str(Pitch.from_string('G13')), 'G13')
+        self.assertEqual(str(Pitch.from_string('F#13')), 'F#13')
+        self.assertEqual(str(Pitch.from_string('B#6')), 'B#6')
+        self.assertEqual(str(Pitch.from_string('Cb6')), 'Cb6')
+
 class TestGetPitchFirstPosition(unittest.TestCase):
     def runTest(self):
         trombone = Trombone()
