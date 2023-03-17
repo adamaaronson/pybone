@@ -18,27 +18,23 @@ class Note(Enum):
     Bb = 10
     B = 11
 
-    def get_semitones(self) -> int:
-        return self.value
-
 ENHARMONICS = {
-    'C#': 'Db',
-    'D#': 'Eb',
-    'E#': 'F',
-    'F#': 'Gb',
-    'G#': 'Ab',
-    'A#': 'Bb',
-    'B#': 'C',
-    'Cb': 'B',
-    'Fb': 'E'
+    'C#': Note.Db,
+    'D#': Note.Eb,
+    'E#': Note.F,
+    'F#': Note.Gb,
+    'G#': Note.Ab,
+    'A#': Note.Bb,
+    'B#': Note.C,
+    'Cb': Note.B,
+    'Fb': Note.E
 }
 
 SEMITONES_PER_OCTAVE = 12
-
 A440_NOTE = Note.A
 A440_OCTAVE = 4
 A440_HERTZ = 440
-A440_SEMITONES = A440_NOTE.get_semitones() + SEMITONES_PER_OCTAVE * A440_OCTAVE
+A440_SEMITONES = A440_NOTE.value + SEMITONES_PER_OCTAVE * A440_OCTAVE
 
 class Pitch:
     def __init__(self, note: Note, octave: int, offset: float = 0, name: str = None):
@@ -74,7 +70,7 @@ class Pitch:
         return self.note == other.note and self.octave == other.octave and self.offset == other.offset
 
     def get_semitones(self):
-        semitones = self.note.get_semitones() + self.octave * SEMITONES_PER_OCTAVE + self.offset
+        semitones = self.note.value + self.octave * SEMITONES_PER_OCTAVE + self.offset
         return semitones - A440_SEMITONES
     
     @classmethod
@@ -86,7 +82,7 @@ class Pitch:
         if hasattr(Note, name):
             note = Note[name]
         elif name in ENHARMONICS:
-            note = Note[ENHARMONICS[name]]
+            note = ENHARMONICS[name]
         
         octave = int(string[num_index:])
         if name == 'Cb':
@@ -123,13 +119,6 @@ TROMBONE_SLIDE_LENGTH = 6.5
 POSITIONS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th']
 START_NODE = 'START'
 END_NODE = 'END'
-
-@dataclass(frozen=True)
-class TromboneState:
-    id: int
-    pitch: Pitch
-    position: float
-    partial: int
 
 class Trombone:
     def __init__(self, fundamental: Pitch = TROMBONE_FUNDAMENTAL, slide_length: float = TROMBONE_SLIDE_LENGTH):
@@ -180,21 +169,29 @@ class Trombone:
             # otherwise, partial is too low to play the note yet
             partial += 1
         return positions, partials
+
+    @dataclass(frozen=True)
+    class State:
+        id: int
+        pitch: Pitch
+        position: float
+        partial: int
+        out: bool = False
     
-    def get_states_of_pitch(self, id: int, pitch: Pitch):
+    def get_states_of_pitch(self, id: int, pitch: Pitch, out=False):
         states = []
         
         positions, partials = self.get_positions_and_partials(pitch)
         for position, partial in zip(positions, partials):
-            state = TromboneState(id, pitch, position, partial)
+            state = Trombone.State(id, pitch, position, partial, out)
             states.append(state)
 
         return states
     
-    def get_states_of_pitches(self, pitches: list[Pitch]):
+    def get_states_of_pitches(self, pitches: list[Pitch], out=False):
         states = []
         for id, pitch in enumerate(pitches):
-            states.append(self.get_states_of_pitch(id, pitch))
+            states.append(self.get_states_of_pitch(id, pitch, out))
         return states
     
     def minimize_slide_movement(self, pitches: list[Pitch], round_positions=False):
@@ -202,9 +199,6 @@ class Trombone:
         Returns the list of slide positions that minimizes the amount
         of slide movement to play a given sequence of pitches.
         """
-
-        if len(pitches) == 0:
-            raise ValueError('pitches cannot be empty')
 
         states = self.get_states_of_pitches(pitches)
 
@@ -229,7 +223,55 @@ class Trombone:
         path = path[1:-1] # remove start and end node
         
         if round_positions:
-            path = [TromboneState(t.id, t.pitch, round(t.position), t.partial) for t in path]
+            path = [Trombone.State(t.id, t.pitch, round(t.position), t.partial) for t in path]
         
         return path
+    
+    def minimize_direction_changes(self, pitches: list[Pitch], round_positions=False):
+        """
+        Returns the list of slide positions that minimizes the
+        number of slide direction changes.
+        """
+
+        in_states = self.get_states_of_pitches(pitches, out=False)
+        out_states = self.get_states_of_pitches(pitches, out=True)
+
+        DG = nx.DiGraph()
+        DG.add_node(START_NODE)
+        DG.add_node(END_NODE)
+
+        for first_note_state in in_states[0]:
+            DG.add_edge(START_NODE, first_note_state, weight=0)
+        for first_note_state in out_states[0]:
+            DG.add_edge(START_NODE, first_note_state, weight=0)
         
+        for last_note_state in in_states[-1]:
+            DG.add_edge(last_note_state, END_NODE, weight=0)
+        for last_note_state in out_states[-1]:
+            DG.add_edge(last_note_state, END_NODE, weight=0)
+        
+        for id in range(len(in_states) - 1):
+            curr_in_states = in_states[id]
+            curr_out_states = out_states[id]
+            next_in_states = in_states[id + 1]
+            next_out_states = out_states[id + 1]
+
+            for curr_i, curr_state in enumerate(curr_in_states):
+                for next_i, next_state in enumerate(next_in_states):
+                    if curr_state.position > next_state.position: # position moves in
+                        DG.add_edge(curr_in_states[curr_i], next_in_states[next_i], weight=0) # keep moving in
+                        DG.add_edge(curr_out_states[curr_i], next_in_states[next_i], weight=1) # change direction from out to in
+                    elif curr_state.position < next_state.position: # position moves out
+                        DG.add_edge(curr_out_states[curr_i], next_out_states[next_i], weight=0) # keep moving out
+                        DG.add_edge(curr_in_states[curr_i], next_out_states[next_i], weight=1) # change direction from in to out
+                    else: # same position
+                        DG.add_edge(curr_in_states[curr_i], next_in_states[next_i], weight=0) # does not change direction
+                        DG.add_edge(curr_out_states[curr_i], next_out_states[next_i], weight=0) # does not change direction
+        
+        path = nx.shortest_path(DG, START_NODE, END_NODE, weight='weight')
+        path = path[1:-1] # remove start and end node
+        
+        if round_positions:
+            path = [Trombone.State(t.id, t.pitch, round(t.position), t.partial) for t in path]
+        
+        return path

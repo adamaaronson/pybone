@@ -127,13 +127,73 @@ class TestMinimizeSlideMovementScale(unittest.TestCase):
             Pitch(Note.G, 3),
             Pitch(Note.A, 3),
             Pitch(Note.B, 3),
-            Pitch(Note.C, 3)
+            Pitch(Note.C, 4)
         ]
         expected_positions = [5, 3, 1, 0, 3, 5, 6, 5]
         path = trombone.minimize_slide_movement(pitches, round_positions=True)
 
         for i, position in enumerate(expected_positions):
             self.assertEqual(path[i].position, position)
+
+class TestMinimizeDirectionChanges(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 4),
+            Pitch(Note.D, 4),
+            Pitch(Note.C, 4)
+        ]
+        expected_positions = [5, 3, 2]
+
+        path = trombone.minimize_direction_changes(pitches, round_positions=True)
+
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
+
+class TestMinimizeDirectionChangesComplicated(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.F, 3),
+            Pitch(Note.A, 3),
+            Pitch(Note.Ab, 3),
+            Pitch(Note.F, 3),
+            Pitch(Note.Gb, 3),
+            Pitch(Note.A, 3),
+            Pitch(Note.Bb, 3)
+        ]
+        expected_positions = [0, 1, 6, 5, 4, 1, 0]
+        path = trombone.minimize_direction_changes(pitches, round_positions=True)
+
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
+
+class TestMinimizeDirectionChangesScale(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 3),
+            Pitch(Note.D, 3),
+            Pitch(Note.E, 3),
+            Pitch(Note.F, 3),
+            Pitch(Note.G, 3),
+            Pitch(Note.A, 3),
+            Pitch(Note.B, 3),
+            Pitch(Note.C, 4),
+            Pitch(Note.D, 4),
+            Pitch(Note.E, 4),
+            Pitch(Note.F, 4),
+            Pitch(Note.G, 4),
+            Pitch(Note.A, 4),
+            Pitch(Note.B, 4),
+            Pitch(Note.C, 5)
+        ]
+        # expected_positions = [5, 3, 1, 0, 3, 5, 6, 5]
+        path = trombone.minimize_direction_changes(pitches, round_positions=True)
+        print([Trombone.position_to_string(p.position) for p in path])
+
+        # for i, position in enumerate(expected_positions):
+        #     self.assertEqual(path[i].position, position)
 
 
 
