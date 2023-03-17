@@ -370,7 +370,7 @@ def main():
 
     parser.add_argument('-m', '--method', dest='method', type=str,
                         default='distance', help='which method to use: distance, direction, gliss, legato')
-    parser.add_argument('notes', metavar='N', type=str, nargs='+',
+    parser.add_argument('notes', metavar='notes', type=str, nargs='+',
                         help='note names')
 
     args = parser.parse_args()
