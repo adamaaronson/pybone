@@ -3,6 +3,7 @@ from math import log2
 import networkx as nx
 from itertools import product
 from dataclasses import dataclass
+import argparse
 
 class Note(Enum):
     C = 0
@@ -185,6 +186,9 @@ class Trombone:
         for position, partial in zip(positions, partials):
             state = Trombone.State(id, pitch, position, partial, out)
             states.append(state)
+        
+        if not states:
+            raise ValueError('pitch cannot be played: {}'.format(pitch))
 
         return states
     
@@ -275,3 +279,102 @@ class Trombone:
             path = [Trombone.State(t.id, t.pitch, round(t.position), t.partial) for t in path]
         
         return path
+    
+    def minimize_partial_changes(self, pitches: list[Pitch], round_positions=False):
+        """
+        Returns the list of slide positions that minimizes the
+        number of partial changes, to optimize for glissandos
+        """
+        states = self.get_states_of_pitches(pitches)
+
+        DG = nx.DiGraph()
+        DG.add_node(START_NODE)
+        DG.add_node(END_NODE)
+
+        for first_note_state in states[0]:
+            DG.add_edge(START_NODE, first_note_state, weight=0)
+        
+        for last_note_state in states[-1]:
+            DG.add_edge(last_note_state, END_NODE, weight=0)
+        
+        for id in range(len(states) - 1):
+            curr_states = states[id]
+            next_states = states[id + 1]
+
+            for curr_state in curr_states:
+                for next_state in next_states:
+                    DG.add_edge(curr_state, next_state, weight=(0 if curr_state.partial == next_state.partial else 1))
+        
+        path = nx.shortest_path(DG, START_NODE, END_NODE, weight='weight')
+        path = path[1:-1] # remove start and end node
+        
+        if round_positions:
+            path = [Trombone.State(t.id, t.pitch, round(t.position), t.partial) for t in path]
+        
+        return path
+    
+    def maximize_partial_changes(self, pitches: list[Pitch], round_positions=False):
+        """
+        Returns the list of slide positions that minimizes the
+        number of partial changes, to optimize for natural legato
+        """
+        states = self.get_states_of_pitches(pitches)
+
+        DG = nx.DiGraph()
+        DG.add_node(START_NODE)
+        DG.add_node(END_NODE)
+
+        for first_note_state in states[0]:
+            DG.add_edge(START_NODE, first_note_state, weight=0)
+        
+        for last_note_state in states[-1]:
+            DG.add_edge(last_note_state, END_NODE, weight=0)
+        
+        for id in range(len(states) - 1):
+            curr_states = states[id]
+            next_states = states[id + 1]
+
+            for curr_state in curr_states:
+                for next_state in next_states:
+                    DG.add_edge(curr_state, next_state, weight=(1 if curr_state.partial == next_state.partial else 0))
+        
+        path = nx.shortest_path(DG, START_NODE, END_NODE, weight='weight')
+        path = path[1:-1] # remove start and end node
+        
+        if round_positions:
+            path = [Trombone.State(t.id, t.pitch, round(t.position), t.partial) for t in path]
+        
+        return path
+
+
+def run(args):
+    trombone = Trombone()
+    pitches = [Pitch.from_string(note) for note in args.notes]
+
+    if args.method == 'distance':
+        states = trombone.minimize_slide_movement(pitches)
+    elif args.method == 'direction':
+        states = trombone.minimize_direction_changes(pitches)
+    elif args.method == 'gliss':
+        states = trombone.minimize_partial_changes(pitches)
+    elif args.method == 'legato':
+        states = trombone.maximize_partial_changes(pitches)
+    else:
+        raise ValueError('invalid method name: {}'.format(args.method))
+    
+    for state in states:
+        print(state.pitch, Trombone.position_to_string(state.position), sep='\t')
+
+def main():
+    parser = argparse.ArgumentParser(description='pybone, the trombone optimizer')
+
+    parser.add_argument('-m', '--method', dest='method', type=str,
+                        default='distance', help='which method to use: distance, direction, gliss, legato')
+    parser.add_argument('notes', metavar='N', type=str, nargs='+',
+                        help='note names')
+
+    args = parser.parse_args()
+    run(args)
+
+if __name__ == '__main__':
+    main()

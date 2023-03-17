@@ -188,13 +188,91 @@ class TestMinimizeDirectionChangesScale(unittest.TestCase):
             Pitch(Note.B, 4),
             Pitch(Note.C, 5)
         ]
-        # expected_positions = [5, 3, 1, 0, 3, 5, 6, 5]
+        expected_positions = [5, 3, 1, 0, 3, 5, 6, 5, 3, 1, 0, 1, 1, 1, 2]
         path = trombone.minimize_direction_changes(pitches, round_positions=True)
-        print([Trombone.position_to_string(p.position) for p in path])
 
-        # for i, position in enumerate(expected_positions):
-        #     self.assertEqual(path[i].position, position)
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
 
+class TestMinimizePartialChanges(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 4),
+            Pitch(Note.F, 4),
+            Pitch(Note.C, 4)
+        ]
+        expected_positions = [5, 0, 5]
+        path = trombone.minimize_partial_changes(pitches, round_positions=True)
+        
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
+
+class TestMinimizePartialChangesScale(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 3),
+            Pitch(Note.D, 3),
+            Pitch(Note.E, 3),
+            Pitch(Note.F, 3),
+            Pitch(Note.G, 3),
+            Pitch(Note.A, 3),
+            Pitch(Note.B, 3),
+            Pitch(Note.C, 4),
+            Pitch(Note.D, 4),
+            Pitch(Note.E, 4),
+            Pitch(Note.F, 4),
+            Pitch(Note.G, 4),
+            Pitch(Note.A, 4),
+            Pitch(Note.B, 4),
+            Pitch(Note.C, 5)
+        ]
+        expected_positions = [5, 3, 1, 0, 3, 1, 6, 5, 3, 1, 0, 5, 3, 1, 0]
+        path = trombone.minimize_partial_changes(pitches, round_positions=True)
+        
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
+
+class TestMaximizePartialChanges(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 4),
+            Pitch(Note.F, 4),
+            Pitch(Note.C, 4)
+        ]
+        expected_positions = [2, 0, 2]
+        path = trombone.maximize_partial_changes(pitches, round_positions=True)
+        
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
+
+class TestMaximizePartialChangesScale(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.C, 3),
+            Pitch(Note.D, 3),
+            Pitch(Note.E, 3),
+            Pitch(Note.F, 3),
+            Pitch(Note.G, 3),
+            Pitch(Note.A, 3),
+            Pitch(Note.B, 3),
+            Pitch(Note.C, 4),
+            Pitch(Note.D, 4),
+            Pitch(Note.E, 4),
+            Pitch(Note.F, 4),
+            Pitch(Note.G, 4),
+            Pitch(Note.A, 4),
+            Pitch(Note.B, 4),
+            Pitch(Note.C, 5)
+        ]
+        expected_positions = [5, 3, 6, 0, 3, 5, 6, 2, 3, 4, 0, 1, 1, 3, 0]
+        path = trombone.maximize_partial_changes(pitches, round_positions=True)
+                
+        for i, position in enumerate(expected_positions):
+            self.assertEqual(path[i].position, position)
 
 
 if __name__ == '__main__':
