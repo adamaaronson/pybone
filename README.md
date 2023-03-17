@@ -1,6 +1,6 @@
 # pybone
 
-Trombone optimizer, written in Python.
+The trombone slide position optimizer, made in Python.
 
 ## How to use
 
