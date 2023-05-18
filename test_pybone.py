@@ -274,6 +274,34 @@ class TestMaximizePartialChangesScale(unittest.TestCase):
         for i, position in enumerate(expected_positions):
             self.assertEqual(path[i].position, position)
 
+class TestGetLength(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        length_Bb1 = trombone.get_length(Pitch(Note.Bb, 2), 1)
+        length_Bb2 = trombone.get_length(Pitch(Note.Bb, 3), 3)
+
+        self.assertAlmostEqual(length_Bb1, 3, places=0)
+        self.assertEqual(length_Bb1, length_Bb2)
+
+class TestGetSlideLength(unittest.TestCase):
+    def runTest(self):
+        trombone = Trombone()
+        pitches = [
+            Pitch(Note.Bb, 2),
+            Pitch(Note.A, 2),
+            Pitch(Note.Ab, 2),
+            Pitch(Note.G, 2),
+            Pitch(Note.Gb, 2),
+            Pitch(Note.F, 2),
+            Pitch(Note.E, 2),
+        ]
+
+        slide_lengths = [trombone.get_slide_length(pitch, 1) for pitch in pitches]
+
+        for i in range(len(pitches) - 2):
+            distance_ratio = (slide_lengths[i + 2] - slide_lengths[i + 1]) / (slide_lengths[i + 1] - slide_lengths[i])
+            self.assertAlmostEqual(distance_ratio, 1.06, places=2)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -36,6 +36,7 @@ A440_NOTE = Note.A
 A440_OCTAVE = 4
 A440_HERTZ = 440
 A440_SEMITONES = A440_NOTE.value + SEMITONES_PER_OCTAVE * A440_OCTAVE
+SPEED_OF_SOUND_MPS = 343
 
 class Pitch:
     def __init__(self, note: Note, octave: int, offset: float = 0, name: str = None):
@@ -170,6 +171,22 @@ class Trombone:
             # otherwise, partial is too low to play the note yet
             partial += 1
         return positions, partials
+    
+    def get_length(self, pitch: Pitch, partial: int):
+        frequency = pitch.get_hertz() / (partial + 1)
+        velocity = SPEED_OF_SOUND_MPS
+        wavelength = velocity / frequency
+
+        # length of tube is equal to half a wavelength
+        # https://www.ww-p.org/common/pages/DisplayFile.aspx?itemId=13249884
+        return wavelength * 0.5
+    
+    def get_slide_length(self, pitch: Pitch, partial: int):
+        fundamental_length = self.get_length(self.fundamental, 0)
+        pitch_length = self.get_length(pitch, partial)
+
+        # slide has two sides, so divide by two
+        return (pitch_length - fundamental_length) / 2
 
     @dataclass(frozen=True)
     class State:
